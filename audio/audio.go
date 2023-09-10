@@ -1,17 +1,15 @@
 package audio
 
 import (
+	//"bufio"
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/hraban/opus"
 	"github.com/jonas747/dca"
 	"github.com/kkdai/youtube/v2"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
@@ -59,8 +57,8 @@ func GetYTVideoInfo(url string) (string, error) {
     return video.Title, nil
 }
 
-func GetVideoStream(videoId string) (io.ReadCloser, error) {
-    client := youtube.Client{};
+func GetVideoStream(videoId string) (*os.File, error) {
+    client := youtube.Client{}
     video, err := client.GetVideo(videoId)
     if err != nil {
         return nil, errors.New("unable to get video from id");
@@ -71,148 +69,126 @@ func GetVideoStream(videoId string) (io.ReadCloser, error) {
     if urlErr != nil {
         return nil, errors.New("unable to create audio stream");
     }
-    
+
     fmt.Println(url);
 
-    result, getErr := http.Get(url);
-    if getErr != nil {
-        return nil, errors.New("unable to get stream from url");
+    stream, _, streamErr := client.GetStream(video, &formats[0])
+    if streamErr != nil {
+        err := fmt.Sprintf("temp err")
+        return nil, errors.New(err)
     }
 
-    return result.Body, nil;
+    var tempBuff bytes.Buffer
+    var buff bytes.Buffer 
+    reader, writer, _ := os.Pipe()
+
+    //remove this if else statement later
+    if video.Duration > time.Second * 1 {
+        go func() {
+            defer writer.Close()
+            tempBuff.ReadFrom(stream)
+            io.Copy(writer, &tempBuff)
+            fmt.Printf("done copying\n")
+            fmt.Printf("lengthL: %d\n", buff.Len())
+            //f, _ := os.Create("out.mp4")
+            //defer f.Close()
+            //io.Copy(f, &buff)
+        }()
+        //time.Sleep(1000*time.Millisecond)
+        //go func() {
+        //    written, _ := io.Copy(writer, &tempBuff)
+        //    bytesWritten = written
+        //}()
+
+        return reader, nil
+    } else {
+        io.Copy(&buff, stream)
+
+        go func() {
+            defer writer.Close()
+            io.Copy(writer, &buff)
+            fmt.Printf("done copying\n")
+            fmt.Printf("lengthL: %d\n", buff.Len())
+            f, _ := os.Create("out.mp4")
+            defer f.Close()
+            io.Copy(f, &buff)
+        }()
+
+        return reader, nil
+    }
 }
 
-func EncodeMp4ToMp3(stream io.ReadCloser, audioBuff *io.PipeWriter) error {
+
+func EncodeMp4ToMp3(stream *os.File, audioBuff *io.PipeWriter) error {
     ffmpegErr := ffmpeg.Input(
             "pipe:0",  
         ).
         Output("pipe:1",
-                         ffmpeg.KwArgs{"b:a": "96K"},
+                         ffmpeg.KwArgs{"b:a": "84K"},
                          ffmpeg.KwArgs{"vn": ""},
+                         ffmpeg.KwArgs{"c:a": "libmp3lame"},
                          ffmpeg.KwArgs{"f": "mp3"}).
                 OverWriteOutput().
                 WithOutput(audioBuff).
+                ErrorToStdOut().
                 WithInput(stream).
                 Run()
 
 
     if ffmpegErr != nil {
         err := fmt.Sprintf("unable to use ffmpeg: %s", ffmpegErr.Error())
-        return errors.New(err);
+        fmt.Printf("ffmpeg error, closing")
+        audioBuff.Close()
+        return errors.New(err)
     }
 
+    fmt.Printf("done with ffmpeg encoding\n")
     audioBuff.Close()
 
     return nil
 }
 
-func encodeAudio(stream io.ReadCloser, audioBuff *bytes.Buffer) error {
-    ffmpegErr := ffmpeg.Input(
-            "pipe:0",  
-        ).
-        Output("pipe:1",
-                         ffmpeg.KwArgs{"c:a": "libopus"},
-                         ffmpeg.KwArgs{"b:a": "96K"},
-                         ffmpeg.KwArgs{"ac": "2"},
-                         ffmpeg.KwArgs{"vn": ""},
-                         ffmpeg.KwArgs{"ar": "48000"},
-                         ffmpeg.KwArgs{"f": "ogg"}).
-                         WithInput(stream).WithOutput(audioBuff).Run()
-
-
-    if ffmpegErr != nil {
-        err := fmt.Sprintf("unable to use ffmpeg: %s", ffmpegErr.Error())
-        return errors.New(err);
-    }
-
-    return nil
-}
-
-func EncodeOpusBuff(outbuff [][]byte, inBuff []int16) error {
-    return nil
-}
-
-func DecodeOpusBuff(outBuff [][]int16, inBuff *bytes.Buffer) error {
-    channels := 2
-    s, err := opus.NewStream(inBuff)
-    if err != nil {
-        err := fmt.Sprintf("unable to open opus stream: %s", err.Error())
-        return errors.New(err)
-    }
-
-    defer s.Close()
-    chunk := make([]int16, 16384)
-    for {
-        n, err := s.Read(chunk)
-        if err == io.EOF {
-            return nil
-        } else if err != nil {
-            err := fmt.Sprintf("unxepceted error reading opus stream: %s", err.Error())
-            return errors.New(err)
-        }
-
-        outBuff = append(outBuff, chunk[:n*channels])
-    }
-}
-
-func FormatOpusBuff(outBuff [][]byte, inBuff *bytes.Buffer) error {
-    var opusLen int16
-
-    for {
-        err := binary.Read(inBuff, binary.LittleEndian, &opusLen)
-
-        if err == io.EOF || err == io.ErrUnexpectedEOF {
-            return err
-        }
-
-        if err != nil {
-            returnErr := fmt.Sprintf("unable to read opus length: %s", err.Error())
-            return errors.New(returnErr)
-        }
-
-        fmt.Printf("opus len: %d", opusLen)
-        buf := make([]byte, opusLen)
-        readErr := binary.Read(inBuff, binary.LittleEndian, &buf)
-        if readErr != nil {
-            err := fmt.Sprintf("unable to read audio data into second part of opus stream: %s", readErr.Error()) 
-            return errors.New(err);
-        }
-
-        outBuff = append(outBuff, buf)
-    }
-
-}
-
 func GetYTAudioBuffer(url string) (*io.PipeReader, error) {
     //do some more error handling for the video url thing
     //no parsing for short urls
-    buffReader, buffWriter := io.Pipe()
+    reader, writer := io.Pipe()
     videoSplit := strings.SplitAfter(url, "v=")
     if len(videoSplit) < 1 {
         err := fmt.Sprintf("invalid url")
-        return buffReader, errors.New(err)
+        return nil, errors.New(err)
     }
 
     videoId := videoSplit[1]
 
-    stream, streamErr := GetVideoStream(videoId)
+    buffReader, streamErr := GetVideoStream(videoId)
     if streamErr != nil {
         err := fmt.Sprintf("unable to get video stream: %s", streamErr.Error())
-        return buffReader, errors.New(err)
+        return nil, errors.New(err)
     }
 
+    time.Sleep(250 * time.Millisecond)
+
     go func() {
-        encodingErr := EncodeMp4ToMp3(stream, buffWriter)
+        encodingErr := EncodeMp4ToMp3(buffReader, writer)
         if encodingErr != nil {
             err := fmt.Sprintf("unable to encode video: %s", encodingErr.Error())
             fmt.Printf("\nissue in encoding go func: %s", err)
+            f, _ := os.Create("temp2.mp4")
+            defer f.Close()
+            io.Copy(f, reader)
+            return
             //return buffer, errors.New(err)
         }
+
+        fmt.Printf("done encoding to mp3")
+        f, _ := os.Create("temp.mp3")
+        defer f.Close()
+        io.Copy(f, reader)
     }()
 
     time.Sleep(500 * time.Millisecond)
 
-    return buffReader, nil;
+    return reader, nil;
 }
 
 func SaveAudioBuffer(buff *bytes.Buffer) {
@@ -262,21 +238,5 @@ func TestEncoder() {
             fmt.Printf("transcode status: time: %s\n", stats.Duration)
         }
         }
-    }
-}
-
-func Test() {
-    buffer := bytes.NewBuffer(make([]byte, 0))
-    videoId := "O8tGBmyYirc" 
-
-    stream, streamErr := GetVideoStream(videoId)
-    if streamErr != nil {
-        fmt.Printf("unable to get video stream: %s", streamErr.Error())
-        return
-    }
-
-    encodingErr := encodeAudio(stream, buffer)
-    if encodingErr != nil {
-        fmt.Printf("unable to encode video: %s", encodingErr.Error())
     }
 }

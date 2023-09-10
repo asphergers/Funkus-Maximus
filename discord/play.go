@@ -113,6 +113,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func PlaySong(s *discordgo.Session, m *discordgo.MessageCreate, url string, 
                 vc *discordgo.VoiceConnection, guild *Guild) {
+
     audioBuff, audioBuffErr := audio.GetYTAudioBuffer(url)
     if audioBuffErr != nil {
         err := fmt.Sprintf("unable to get encoded audio: %s", audioBuffErr.Error())
