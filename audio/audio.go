@@ -16,16 +16,16 @@ import (
 )
 
 func GetVideoStreamURL(url string) (string, error) {
-//    videoId, parseErr := parser.ParseYTUrl(url)
-//    if parseErr != nil {
-//        err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
-//        return "", errors.New(err)
-//    }
+    videoId, parseErr := parser.ParseYTUrl(url)
+    if parseErr != nil {
+        err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
+        return "", errors.New(err)
+    }
 
     client := youtube.Client{};
-    video, err := client.GetVideo(url)
+    video, err := client.GetVideo(videoId)
     if err != nil {
-        err := fmt.Sprintf("unable to get video from id %s\n", url)
+        err := fmt.Sprintf("unable to get video from id %s\n", videoId)
         return "", errors.New(err);
     }
 
