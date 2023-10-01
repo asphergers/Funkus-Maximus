@@ -1,7 +1,9 @@
 package discord
 
 import (
-    "github.com/bwmarrin/discordgo"
+	"io"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 
@@ -10,6 +12,7 @@ type BotCommand func(*discordgo.Session, *discordgo.MessageCreate)
 type Song struct {
     url string
     title string
+    buff *io.PipeReader
 }
 
 type Command struct {

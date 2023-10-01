@@ -16,14 +16,14 @@ var Skip = Command {
 func skip(s *discordgo.Session, m *discordgo.MessageCreate) {
     guild, ok := GuildMap[m.GuildID]
     if !ok {
-        err := fmt.Sprintf("guild is unregistered, please play at least one song")
-        s.ChannelMessageSend(m.ChannelID, err)
+        returnMessage := fmt.Sprintf("guild is unregistered, please play at least one song")
+        s.ChannelMessageSend(m.ChannelID, returnMessage)
         return
     }
-
-    if len(guild.Queue) == 0 {
-        err := fmt.Sprintf("queue is empty")
-        s.ChannelMessageSend(m.ChannelID, err)
+    
+    if len(guild.Queue) == 0 && guild.CurrentStream == nil {
+        returnMessage := fmt.Sprintf("queue is empty")
+        s.ChannelMessageSend(m.ChannelID, returnMessage)
         return
     }
 

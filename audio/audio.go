@@ -1,13 +1,13 @@
 package audio
 
 import (
+    "main/parser"
 	//"bufio"
 	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/jonas747/dca"
@@ -16,43 +16,42 @@ import (
 )
 
 func GetVideoStreamURL(url string) (string, error) {
-    videoSplit := strings.SplitAfter(url, "v=")
-    if len(videoSplit) < 1 {
-        err := fmt.Sprintf("invalid url")
-        return "", errors.New(err)
-    }
-
-    videoId := videoSplit[1]
+//    videoId, parseErr := parser.ParseYTUrl(url)
+//    if parseErr != nil {
+//        err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
+//        return "", errors.New(err)
+//    }
 
     client := youtube.Client{};
-    video, err := client.GetVideo(videoId)
+    video, err := client.GetVideo(url)
     if err != nil {
-        return "", errors.New("unable to get video from id");
+        err := fmt.Sprintf("unable to get video from id %s\n", url)
+        return "", errors.New(err);
     }
 
     formats := video.Formats
     url, urlErr := client.GetStreamURL(video, &formats[0])
     if urlErr != nil {
-        return "", errors.New("unable to create audio stream");
+        return "", errors.New("unable to create audio stream\n");
     }
 
     return url, nil
 }
 
 func GetYTVideoInfo(url string) (string, error) {
-    videoSplit := strings.SplitAfter(url, "v=")
-    if len(videoSplit) < 2 {
-        err := fmt.Sprintf("invalid url")
+    videoId, parseErr := parser.ParseYTUrl(url)
+    if parseErr != nil {
+        err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
         return "", errors.New(err)
     }
-
-    videoId := videoSplit[1]
 
     client := youtube.Client{};
     video, err := client.GetVideo(videoId)
     if err != nil {
-        return "", errors.New("unable to get video from id");
+        err := fmt.Sprintf("unable to get video from id %s\n", videoId)
+        return "", errors.New(err);
     }
+
 
     return video.Title, nil
 }
@@ -61,63 +60,36 @@ func GetVideoStream(videoId string) (*os.File, error) {
     client := youtube.Client{}
     video, err := client.GetVideo(videoId)
     if err != nil {
-        return nil, errors.New("unable to get video from id");
+        return nil, errors.New("unable to get video from id\n");
     }
 
     formats := video.Formats.WithAudioChannels()
     url, urlErr := client.GetStreamURL(video, &formats[0])
     if urlErr != nil {
-        return nil, errors.New("unable to create audio stream");
+        return nil, errors.New("unable to create audio stream\n");
     }
 
     fmt.Println(url);
 
     stream, _, streamErr := client.GetStream(video, &formats[0])
     if streamErr != nil {
-        err := fmt.Sprintf("temp err")
+        err := fmt.Sprintf("unable to get yt stream\n")
         return nil, errors.New(err)
     }
 
-    var tempBuff bytes.Buffer
     var buff bytes.Buffer 
     reader, writer, _ := os.Pipe()
 
-    //remove this if else statement later
-    if video.Duration > time.Second * 1 {
-        go func() {
-            defer writer.Close()
-            tempBuff.ReadFrom(stream)
-            io.Copy(writer, &tempBuff)
-            fmt.Printf("done copying\n")
-            fmt.Printf("lengthL: %d\n", buff.Len())
-            //f, _ := os.Create("out.mp4")
-            //defer f.Close()
-            //io.Copy(f, &buff)
-        }()
-        //time.Sleep(1000*time.Millisecond)
-        //go func() {
-        //    written, _ := io.Copy(writer, &tempBuff)
-        //    bytesWritten = written
-        //}()
+    go func() {
+        defer writer.Close()
+        buff.ReadFrom(stream)
+        io.Copy(writer, &buff)
+    }()
 
-        return reader, nil
-    } else {
-        io.Copy(&buff, stream)
+    time.Sleep(500 * time.Millisecond)
 
-        go func() {
-            defer writer.Close()
-            io.Copy(writer, &buff)
-            fmt.Printf("done copying\n")
-            fmt.Printf("lengthL: %d\n", buff.Len())
-            f, _ := os.Create("out.mp4")
-            defer f.Close()
-            io.Copy(f, &buff)
-        }()
-
-        return reader, nil
-    }
+    return reader, nil
 }
-
 
 func EncodeMp4ToMp3(stream *os.File, audioBuff *io.PipeWriter) error {
     ffmpegErr := ffmpeg.Input(
@@ -136,7 +108,7 @@ func EncodeMp4ToMp3(stream *os.File, audioBuff *io.PipeWriter) error {
 
 
     if ffmpegErr != nil {
-        err := fmt.Sprintf("unable to use ffmpeg: %s", ffmpegErr.Error())
+        err := fmt.Sprintf("unable to use ffmpeg: %s\n", ffmpegErr.Error())
         fmt.Printf("ffmpeg error, closing")
         audioBuff.Close()
         return errors.New(err)
@@ -152,41 +124,29 @@ func GetYTAudioBuffer(url string) (*io.PipeReader, error) {
     //do some more error handling for the video url thing
     //no parsing for short urls
     reader, writer := io.Pipe()
-    videoSplit := strings.SplitAfter(url, "v=")
-    if len(videoSplit) < 1 {
-        err := fmt.Sprintf("invalid url")
+
+    videoId, parseErr := parser.ParseYTUrl(url)
+    if parseErr != nil {
+        err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
         return nil, errors.New(err)
     }
-
-    videoId := videoSplit[1]
 
     buffReader, streamErr := GetVideoStream(videoId)
     if streamErr != nil {
-        err := fmt.Sprintf("unable to get video stream: %s", streamErr.Error())
+        err := fmt.Sprintf("unable to get video stream: %s\n", streamErr.Error())
         return nil, errors.New(err)
     }
 
-    time.Sleep(250 * time.Millisecond)
+    time.Sleep(500 * time.Millisecond)
 
     go func() {
         encodingErr := EncodeMp4ToMp3(buffReader, writer)
         if encodingErr != nil {
-            err := fmt.Sprintf("unable to encode video: %s", encodingErr.Error())
+            err := fmt.Sprintf("unable to encode video: %s\n", encodingErr.Error())
             fmt.Printf("\nissue in encoding go func: %s", err)
-            f, _ := os.Create("temp2.mp4")
-            defer f.Close()
-            io.Copy(f, reader)
-            return
             //return buffer, errors.New(err)
         }
-
-        fmt.Printf("done encoding to mp3")
-        f, _ := os.Create("temp.mp3")
-        defer f.Close()
-        io.Copy(f, reader)
     }()
-
-    time.Sleep(500 * time.Millisecond)
 
     return reader, nil;
 }
@@ -202,7 +162,7 @@ func TestEncoder() {
 
     audioBuff, audioBuffErr := GetYTAudioBuffer(url)
     if audioBuffErr != nil {
-        err := fmt.Sprintf("unable to get encoded audio: %s", audioBuffErr.Error())
+        err := fmt.Sprintf("unable to get encoded audio: %s\n", audioBuffErr.Error())
         fmt.Printf("\n%s", err)
         return
     }
@@ -217,7 +177,7 @@ func TestEncoder() {
 
     encodingSession, encodingErr := dca.EncodeMem(audioBuff, options)
     if encodingErr != nil {
-        err := fmt.Sprintf("encoding error: %s", encodingErr.Error())
+        err := fmt.Sprintf("encoding error: %s\n", encodingErr.Error())
         fmt.Printf(err)
         return
     }

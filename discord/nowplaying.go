@@ -16,18 +16,18 @@ var NowPlaying = Command {
 func np(s *discordgo.Session, m *discordgo.MessageCreate) {
     guild, ok := GuildMap[m.GuildID]
     if !ok {
-        err := fmt.Sprintf("guild is unregistered, please play at least one song")
-        s.ChannelMessageSend(m.ChannelID, err)
+        returnMessage := fmt.Sprintf("guild is unregistered, please play at least one song")
+        s.ChannelMessageSend(m.ChannelID, returnMessage)
         return
     }
 
     if guild.CurrentStream == nil {
-        err := fmt.Sprintf("nothing current playing")
-        s.ChannelMessageSend(m.ChannelID, err)
+        returnMessage := fmt.Sprintf("nothing current playing")
+        s.ChannelMessageSend(m.ChannelID, returnMessage)
         return
     }
 
-    currentSong := guild.Queue[0];
+    currentSong := guild.CurrentSong
     currentPos := guild.CurrentStream.PlaybackPosition()
 
     message := fmt.Sprintf("current song: %s\nposition: %s", currentSong.title, currentPos)

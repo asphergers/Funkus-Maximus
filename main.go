@@ -3,13 +3,13 @@ package main
 import (
     "fmt" 
     "main/discord"
-    _ "main/audio"
+    "main/parser"
 )
 
 
 func main() {
-    //audio.TestEncoder()
     fmt.Println("hello world")
+    parser.InitParser()
     discord.Start()
 }
 

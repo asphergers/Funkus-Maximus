@@ -9,14 +9,15 @@ import (
 
 type Guild struct {
     Id string
-    Queue []Song
+    Queue []*Song
     CurrentStream *dca.StreamingSession 
+    CurrentSong *Song
 }
 
 func GuildNew(id string) Guild {
     guild := Guild {
         Id: id,
-        Queue: make([]Song, 0),
+        Queue: make([]*Song, 0),
         CurrentStream: nil,
     }
 

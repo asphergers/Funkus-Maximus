@@ -32,7 +32,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
 
     currentUserVC, userChannelErr := getCurrentUserChannel(s, m)
     if userChannelErr != nil {
-        err := fmt.Sprintf("you are not in a vc: %s", userChannelErr.Error())
+        err := fmt.Sprintf("you are not in a vc: %s\n", userChannelErr.Error())
         s.ChannelMessageSend(m.ChannelID, err)
         return
     }
@@ -42,7 +42,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
     if !ok {
         err := RegisterGuild(m.GuildID)
         if err != nil {
-            err := fmt.Sprintf("unable to register guild: %s", err.Error())
+            err := fmt.Sprintf("unable to register guild: %s\n", err.Error())
             s.ChannelMessageSend(m.ChannelID, err)
             return
         }
@@ -64,9 +64,10 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
         song := Song {
             url: url,
             title: title,
+            buff: nil,
         }
 
-        AddSongToQueue(guild, song)
+        AddSongToQueue(guild, &song)
 
         addMessage := fmt.Sprintf("added song to queue: %s", song.title)
         s.ChannelMessageSend(m.ChannelID, addMessage)
@@ -75,7 +76,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
 
     title, infoErr := audio.GetYTVideoInfo(url)
     if infoErr != nil {
-        err := fmt.Sprintf("unable to get video info: %s", infoErr.Error())
+        err := fmt.Sprintf("unable to get video info: %s\n", infoErr.Error())
         s.ChannelMessageSend(m.ChannelID, err)
         return
     }
@@ -83,13 +84,14 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
     song := Song {
         title: title,
         url: url,
+        buff: nil,
     }
     
-    AddSongToQueue(guild, song)
+    AddSongToQueue(guild, &song)
 
     vc, vcJoinErr := s.ChannelVoiceJoin(m.GuildID, currentUserVC, false, true)
     if vcJoinErr != nil {
-        err := fmt.Sprintf("unable to join channel: %s", vcJoinErr.Error())
+        err := fmt.Sprintf("unable to join channel: %s\n", vcJoinErr.Error())
         s.ChannelMessageSend(m.ChannelID, err)
         vc.Disconnect()
         return
@@ -99,26 +101,44 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
         vc.Speaking(false)
         vc.Disconnect()
         guild.CurrentStream = nil
+        guild.CurrentSong = nil
     }()
 
     for (len(guild.Queue) > 0) {
         song := guild.Queue[0]
+        var nextSong *Song
+        if len(guild.Queue) >= 2 { nextSong = guild.Queue[1] }
+
         message := fmt.Sprintf("now playing: %s", song.title)
         s.ChannelMessageSend(m.ChannelID, message)
 
-        PlaySong(s, m, song.url, vc, guild)
+        go func() {
+            if nextSong == nil { return }
+            audioBuff, buffErr := audio.GetYTAudioBuffer(nextSong.url)
+            if buffErr != nil { return }
+            nextSong.buff = audioBuff
+        }()
+
+        guild.CurrentSong = song
         guild.Queue = guild.Queue[1:]
+
+        PlaySong(s, m, song, vc, guild)
     }
 }
 
-func PlaySong(s *discordgo.Session, m *discordgo.MessageCreate, url string, 
+func PlaySong(s *discordgo.Session, m *discordgo.MessageCreate, song *Song, 
                 vc *discordgo.VoiceConnection, guild *Guild) {
 
-    audioBuff, audioBuffErr := audio.GetYTAudioBuffer(url)
-    if audioBuffErr != nil {
-        err := fmt.Sprintf("unable to get encoded audio: %s", audioBuffErr.Error())
-        s.ChannelMessageSend(m.ChannelID, err)
-        return
+
+    if song.buff == nil {
+        audioBuff, audioBuffErr := audio.GetYTAudioBuffer(song.url)
+        if audioBuffErr != nil {
+            err := fmt.Sprintf("unable to get encoded audio: %s\n", audioBuffErr.Error())
+            s.ChannelMessageSend(m.ChannelID, err)
+            return
+        }
+
+        song.buff = audioBuff
     }
 
     options := dca.StdEncodeOptions
@@ -127,14 +147,14 @@ func PlaySong(s *discordgo.Session, m *discordgo.MessageCreate, url string,
     options.Application = "lowdelay"
     options.Volume = 500
 
-    encodingSession, encodingErr := dca.EncodeMem(audioBuff, options)
+    encodingSession, encodingErr := dca.EncodeMem(song.buff, options)
     if encodingErr != nil {
-        err := fmt.Sprintf("encoding error: %s", encodingErr.Error())
+        err := fmt.Sprintf("encoding error: %s\n", encodingErr.Error())
         s.ChannelMessageSend(m.ChannelID, err)
         return
     }
 
-    time.Sleep(1000 * time.Millisecond)
+    //time.Sleep(250 * time.Millisecond)
 
     done := make(chan error)
 
@@ -145,7 +165,7 @@ func PlaySong(s *discordgo.Session, m *discordgo.MessageCreate, url string,
 
     speakErr := vc.Speaking(true)
     if speakErr != nil {
-        err := fmt.Sprintf("unable to fucking speak: %s", speakErr.Error())
+        err := fmt.Sprintf("unable to fucking speak: %s\n", speakErr.Error())
         s.ChannelMessageSend(m.ChannelID, err)
         return
     }
@@ -188,7 +208,7 @@ func getCurrentUserChannel(s *discordgo.Session, m *discordgo.MessageCreate) (st
     return "", nil
 }
 
-func AddSongToQueue(guild *Guild, song Song) error {
+func AddSongToQueue(guild *Guild, song *Song) error {
     guild.Queue = append(guild.Queue, song)
 
     return nil
