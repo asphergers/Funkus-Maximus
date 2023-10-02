@@ -47,7 +47,11 @@ func GetYTVideoInfo(url string) (string, error) {
     //    return "", errors.New(err)
     //}
 
-    videoId, _ := parser.SetId(url);
+    videoId, idErr := parser.SetId(url);
+    if idErr != nil {
+        err := fmt.Sprintf("unable to get video id: %s", idErr.Error())
+        return "", errors.New(err)
+    }
 
     client := youtube.Client{};
     video, err := client.GetVideo(videoId)
