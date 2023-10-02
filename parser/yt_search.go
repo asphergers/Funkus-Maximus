@@ -23,7 +23,7 @@ func SetId(input string) (string, error) {
     if len(input) < len("https://") {
         tid, err := SearchYoutube(input)
         if err != nil {
-            e := fmt.Sprintf("bad query %s\n", input)
+            e := fmt.Sprintf("bad query: %s\n", err.Error())
             return "", errors.New(e);
         }
 
