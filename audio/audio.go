@@ -27,7 +27,7 @@ func GetVideoStreamURL(input string) (string, error) {
     client := youtube.Client{};
     video, err := client.GetVideo(id)
     if err != nil {
-        err := fmt.Sprintf("unable to get video from id %s\n", id)
+        err := fmt.Sprintf("unable to get video from id while getting stream url: %s\n", id)
         return "", errors.New(err);
     }
 
@@ -52,7 +52,7 @@ func GetYTVideoInfo(url string) (string, error) {
     client := youtube.Client{};
     video, err := client.GetVideo(videoId)
     if err != nil {
-        err := fmt.Sprintf("unable to get video from id %s\n", videoId)
+        err := fmt.Sprintf("unable to get video from id while getting yt info%s\n", videoId)
         return "", errors.New(err);
     }
 
@@ -64,7 +64,7 @@ func GetVideoStream(videoId string) (*os.File, error) {
     client := youtube.Client{}
     video, err := client.GetVideo(videoId)
     if err != nil {
-        return nil, errors.New("unable to get video from id\n");
+        return nil, errors.New("unable to get video from id while getting stream\n");
     }
 
     formats := video.Formats.WithAudioChannels()
