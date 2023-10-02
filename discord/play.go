@@ -107,7 +107,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
     for (len(guild.Queue) > 0) {
         song := guild.Queue[0]
         //var nextSong *Song
-        if len(guild.Queue) >= 2 { nextSong = guild.Queue[1] }
+        //if len(guild.Queue) >= 2 { nextSong = guild.Queue[1] }
 
         message := fmt.Sprintf("now playing: %s", song.title)
         s.ChannelMessageSend(m.ChannelID, message)

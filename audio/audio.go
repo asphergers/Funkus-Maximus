@@ -22,21 +22,7 @@ func GetVideoStreamURL(input string) (string, error) {
    //     return "", errors.New(err)
    // }
 
-    id := ""
-    if len(input) < len("https://") {
-        tid, err := parser.SearchYoutube(input)
-        if err != nil {
-            err := fmt.Sprintf("bad query %s\n", input)
-            return "", errors.New(err);
-        }
-
-        id = tid;
-    }
-
-
-    if id == "" { id = input }
-
-    id := parser.SetId(input);
+    id, _ := parser.SetId(input);
 
     client := youtube.Client{};
     video, err := client.GetVideo(id)
