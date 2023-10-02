@@ -41,11 +41,13 @@ func GetVideoStreamURL(input string) (string, error) {
 }
 
 func GetYTVideoInfo(url string) (string, error) {
-    videoId, parseErr := parser.ParseYTUrl(url)
-    if parseErr != nil {
-        err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
-        return "", errors.New(err)
-    }
+    //videoId, parseErr := parser.ParseYTUrl(url)
+    //if parseErr != nil {
+    //    err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
+    //    return "", errors.New(err)
+    //}
+
+    videoId, _ := parser.SetId(url);
 
     client := youtube.Client{};
     video, err := client.GetVideo(videoId)
