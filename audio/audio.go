@@ -127,11 +127,13 @@ func GetYTAudioBuffer(url string) (*io.PipeReader, error) {
     //no parsing for short urls
     reader, writer := io.Pipe()
 
-    videoId, parseErr := parser.ParseYTUrl(url)
-    if parseErr != nil {
-        err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
-        return nil, errors.New(err)
-    }
+    //videoId, parseErr := parser.ParseYTUrl(url)
+    //if parseErr != nil {
+    //    err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
+    //    return nil, errors.New(err)
+    //}
+
+    videoId, _ := parser.SetId(url);
 
     buffReader, streamErr := GetVideoStream(videoId)
     if streamErr != nil {
