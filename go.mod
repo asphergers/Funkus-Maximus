@@ -22,8 +22,16 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jonas747/ogg v0.0.0-20161220051205-b4f6f4cf3757 // indirect
+	github.com/klauspost/compress v1.10.4 // indirect
+	github.com/lithdew/bytesutil v0.0.0-20200409052507-d98389230a59 // indirect
+	github.com/lithdew/nicehttp v0.0.0-20200422123956-0d3d3dd9b482 // indirect
+	github.com/lithdew/youtube v0.0.0-20200524132213-a1fd5d688f8a // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.12.0 // indirect
+	github.com/valyala/fastjson v1.5.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 )

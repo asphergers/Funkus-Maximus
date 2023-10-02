@@ -15,17 +15,33 @@ import (
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
-func GetVideoStreamURL(url string) (string, error) {
+func GetVideoStreamURL(input string) (string, error) {
    // videoId, parseErr := parser.ParseYTUrl(url)
    // if parseErr != nil {
    //     err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
    //     return "", errors.New(err)
    // }
 
+    id := ""
+    if len(input) < len("https://") {
+        tid, err := parser.SearchYoutube(input)
+        if err != nil {
+            err := fmt.Sprintf("bad query %s\n", input)
+            return "", errors.New(err);
+        }
+
+        id = tid;
+    }
+
+
+    if id == "" { id = input }
+
+    id := parser.SetId(input);
+
     client := youtube.Client{};
-    video, err := client.GetVideo(url)
+    video, err := client.GetVideo(id)
     if err != nil {
-        err := fmt.Sprintf("unable to get video from id %s\n", url)
+        err := fmt.Sprintf("unable to get video from id %s\n", id)
         return "", errors.New(err);
     }
 
