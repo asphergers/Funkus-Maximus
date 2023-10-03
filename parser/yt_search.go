@@ -21,7 +21,7 @@ func ytdl_search_first(query string) (string, string, error) {
     }
 
     split := strings.Split(stdOut.String(), "\n")
-    if len(split) != 2 {
+    if len(split) < 2 {
         err := fmt.Sprintf("invalid youtube dl parsed response: %s", stdOut.String())
         return "", "", errors.New(err)
     }
