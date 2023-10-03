@@ -16,6 +16,7 @@ import (
 
 var Play = Command {
     Name: "play",
+    Aliases: []string{"play", "p"},
     Description: "play audio from youtube videos",
     Help: "!play [url]",
     Function: play,

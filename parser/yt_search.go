@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func ytdl_search_first(query string) (string, string, error) {
-    cmd := exec.Command("youtube-dl", "--skip-download", "--get-title", "--get-id", "ytsearch1:" + query);
+func ytdl_search_first(query string) (string, error) {
+    cmd := exec.Command("youtube-dl", "--skip-download", "--get-id", "ytsearch1:" + query);
 
     var stdOut, stdErr bytes.Buffer
     cmd.Stdout = &stdOut
@@ -17,20 +17,20 @@ func ytdl_search_first(query string) (string, string, error) {
     runErr := cmd.Run()
     if runErr != nil {
         err := fmt.Sprintf("unable to query using youtube dl: %s", runErr.Error())
-        return "", "", errors.New(err)
+        return "", errors.New(err)
     }
 
     split := strings.Split(stdOut.String(), "\n")
     if len(split) < 2 {
         err := fmt.Sprintf("invalid youtube dl parsed response: %s", stdOut.String())
-        return "", "", errors.New(err)
+        return "", errors.New(err)
     }
 
-    return split[0], split[1], nil
+    return split[0], nil
 }
 
 func SearchYoutube(query string) (string, error) {
-    _, id, searchErr := ytdl_search_first(query)
+    id, searchErr := ytdl_search_first(query)
     if searchErr != nil {
         err := fmt.Sprintf("unable to search: %s", searchErr.Error())
         return "", errors.New(err)

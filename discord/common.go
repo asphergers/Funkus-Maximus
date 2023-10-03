@@ -17,6 +17,7 @@ type Song struct {
 
 type Command struct {
     Name string
+    Aliases []string
     Description string
     Help string
     Function BotCommand

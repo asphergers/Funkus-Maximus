@@ -8,6 +8,7 @@ import (
 
 var Queue = Command {
     Name: "q",
+    Aliases: []string{"queue", "q"},
     Description: "show the current queue",
     Help: "!play [url]",
     Function: queue,
