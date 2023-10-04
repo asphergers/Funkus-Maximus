@@ -12,6 +12,7 @@ type BotCommand func(*discordgo.Session, *discordgo.MessageCreate)
 type Song struct {
     url string
     title string
+    length string
     buff *io.PipeReader
 }
 

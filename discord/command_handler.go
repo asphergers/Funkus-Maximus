@@ -7,7 +7,7 @@ import (
 )
 
 
-var functions []Command
+var functions [6]Command
 
 func initCommands() {
     functions[0] = Ping

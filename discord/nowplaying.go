@@ -31,6 +31,6 @@ func np(s *discordgo.Session, m *discordgo.MessageCreate) {
     currentSong := guild.CurrentSong
     currentPos := guild.CurrentStream.PlaybackPosition()
 
-    message := fmt.Sprintf("current song: %s\nposition: %s", currentSong.title, currentPos)
+    message := fmt.Sprintf("current song: %s\nposition: %s\nlength: %s", currentSong.title, currentPos, currentSong.length)
     s.ChannelMessageSend(m.ChannelID, message)
 }

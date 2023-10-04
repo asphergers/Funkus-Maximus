@@ -23,7 +23,7 @@ var Play = Command {
 }
 
 func play(s *discordgo.Session, m *discordgo.MessageCreate) {
-    argumentSplit := strings.SplitN(m.Content, " ", 2)
+    argumentSplit := strings.Split(m.Content, " ")
     if len(argumentSplit) < 1 {
         s.ChannelMessageSend(m.ChannelID, "not enough arguments")
         return 
@@ -55,7 +55,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
     fmt.Println(guild.CurrentStream)
 
     if guild.CurrentStream != nil {
-        title, err := audio.GetYTVideoInfo(url);
+        videoInfo, err := audio.GetYTVideoInfo(url);
         if err != nil {
             returnErr := fmt.Sprintf("unable to get yt video info: %s", err.Error())
             s.ChannelMessageSend(m.ChannelID, returnErr)
@@ -64,7 +64,8 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
 
         song := Song {
             url: url,
-            title: title,
+            title: videoInfo.Title,
+            length: videoInfo.Length,
             buff: nil,
         }
 
@@ -75,7 +76,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
         return
     }
 
-    title, infoErr := audio.GetYTVideoInfo(url)
+    videoInfo, infoErr := audio.GetYTVideoInfo(url)
     if infoErr != nil {
         err := fmt.Sprintf("unable to get video info: %s\n", infoErr.Error())
         s.ChannelMessageSend(m.ChannelID, err)
@@ -83,8 +84,9 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
     }
 
     song := Song {
-        title: title,
+        title: videoInfo.Title,
         url: url,
+        length: videoInfo.Length,
         buff: nil,
     }
     
@@ -107,18 +109,8 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
 
     for (len(guild.Queue) > 0) {
         song := guild.Queue[0]
-        //var nextSong *Song
-        //if len(guild.Queue) >= 2 { nextSong = guild.Queue[1] }
-
         message := fmt.Sprintf("now playing: %s", song.title)
         s.ChannelMessageSend(m.ChannelID, message)
-
-        //go func() {
-        //    if nextSong == nil { return }
-        //    audioBuff, buffErr := audio.GetYTAudioBuffer(nextSong.url)
-        //    if buffErr != nil { return }
-        //    nextSong.buff = audioBuff
-        //}()
 
         guild.CurrentSong = song
         guild.Queue = guild.Queue[1:]
