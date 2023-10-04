@@ -8,15 +8,15 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var Remove = Command {
-    Name: "remove",
-    Aliases: []string{"remove", "rm"},
+var Jump = Command {
+    Name: "jump",
+    Aliases: []string{"jump", "jmp"},
     Description: "remove an item from the queue",
     Help: "!remove [queue position]",
-    Function: remove,
+    Function: jump,
 }
 
-func remove(s *discordgo.Session, m *discordgo.MessageCreate) {
+func jump(s *discordgo.Session, m *discordgo.MessageCreate) {
     argumentSplit := strings.Split(m.Content, " ")
     if len(argumentSplit) <= 1 {
         s.ChannelMessageSend(m.ChannelID, "not enough arguments")
@@ -51,5 +51,6 @@ func remove(s *discordgo.Session, m *discordgo.MessageCreate) {
         return
     }
 
-    guild.Queue = append(guild.Queue[:requestedPosition-1], guild.Queue[requestedPosition:]...)
+    guild.Queue = guild.Queue[requestedPosition-1:]
+    guild.CurrentStream.Kill()
 }

@@ -31,7 +31,7 @@ func queue(s *discordgo.Session, m *discordgo.MessageCreate) {
 
     var message string
     for i, song := range guild.Queue {
-        entry := strconv.Itoa(i) + ": " + song.title + "\n" 
+        entry := strconv.Itoa(i+1) + ": " + song.title + "\n" 
         message += entry
     }
 
