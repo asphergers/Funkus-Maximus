@@ -23,8 +23,8 @@ var Play = Command {
 }
 
 func play(s *discordgo.Session, m *discordgo.MessageCreate) {
-    argumentSplit := strings.Split(m.Content, " ")
-    if len(argumentSplit) < 1 {
+    argumentSplit := strings.SplitN(m.Content, " ", 2)
+    if len(argumentSplit) <= 1 {
         s.ChannelMessageSend(m.ChannelID, "not enough arguments")
         return 
     }

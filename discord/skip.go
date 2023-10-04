@@ -22,8 +22,8 @@ func skip(s *discordgo.Session, m *discordgo.MessageCreate) {
         return
     }
     
-    if len(guild.Queue) == 0 && guild.CurrentStream == nil {
-        returnMessage := fmt.Sprintf("queue is empty")
+    if len(guild.Queue) == 0 || guild.CurrentStream == nil {
+        returnMessage := fmt.Sprintf("queue is empty / nothing is playing")
         s.ChannelMessageSend(m.ChannelID, returnMessage)
         return
     }
