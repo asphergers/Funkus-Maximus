@@ -23,7 +23,7 @@ func pause(s *discordgo.Session, m *discordgo.MessageCreate) {
     }
 
     if guild.CurrentStream == nil {
-        returnMessage := fmt.Sprintf("nothing current playing")
+        returnMessage := fmt.Sprintf("nothing currently playing")
         s.ChannelMessageSend(m.ChannelID, returnMessage)
         return
     }
@@ -32,4 +32,8 @@ func pause(s *discordgo.Session, m *discordgo.MessageCreate) {
 
     guild.Paused = !guild.Paused
     currentStream.SetPaused(guild.Paused)
+
+    var message string
+    if guild.Paused { message = "paused" } else { message = "unpaused" }
+    s.ChannelMessageSend(m.ChannelID, message)
 }

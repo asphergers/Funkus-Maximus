@@ -45,11 +45,15 @@ func remove(s *discordgo.Session, m *discordgo.MessageCreate) {
         return
     }
 
-    if requestedPosition > queueLen || requestedPosition == 0 {
+    if requestedPosition > queueLen || requestedPosition <= 0 {
         err := "invalid index"
         s.ChannelMessageSend(m.ChannelID, err)
         return
     }
 
+    removedSong := guild.Queue[requestedPosition-1]
     guild.Queue = append(guild.Queue[:requestedPosition-1], guild.Queue[requestedPosition:]...)
+
+    message := fmt.Sprintf("removed song from queue: %s", removedSong.title)
+    s.ChannelMessageSend(m.ChannelID, message)
 }

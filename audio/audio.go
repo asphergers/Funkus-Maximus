@@ -10,43 +10,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/jonas747/dca"
 	"github.com/kkdai/youtube/v2"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
-func GetVideoStreamURL(input string) (string, error) {
-   // videoId, parseErr := parser.ParseYTUrl(url)
-   // if parseErr != nil {
-   //     err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
-   //     return "", errors.New(err)
-   // }
-
-    id, _ := parser.SetId(input);
-
-    client := youtube.Client{};
-    video, err := client.GetVideo(id)
-    if err != nil {
-        err := fmt.Sprintf("unable to get video from id while getting stream url: %s\n", id)
-        return "", errors.New(err);
-    }
-
-    formats := video.Formats
-    url, urlErr := client.GetStreamURL(video, &formats[0])
-    if urlErr != nil {
-        return "", errors.New("unable to create audio stream\n");
-    }
-
-    return url, nil
-}
-
 func GetYTVideoInfo(url string) (*YTInfo, error) {
-    //videoId, parseErr := parser.ParseYTUrl(url)
-    //if parseErr != nil {
-    //    err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
-    //    return "", errors.New(err)
-    //}
-
     videoId, idErr := parser.SetId(url);
     if idErr != nil {
         err := fmt.Sprintf("unable to get video id: %s", idErr.Error())
@@ -164,54 +132,4 @@ func GetYTAudioBuffer(url string) (*io.PipeReader, error) {
     }()
 
     return reader, nil;
-}
-
-func SaveAudioBuffer(buff *bytes.Buffer) {
-    f, _ := os.Create("out.ogg")
-    f.Write(buff.Bytes())
-    f.Close()
-}
-
-func TestEncoder() {
-    url := "https://www.youtube.com/watch?v=c8LSRGJO5Mk"
-
-    audioBuff, audioBuffErr := GetYTAudioBuffer(url)
-    if audioBuffErr != nil {
-        err := fmt.Sprintf("unable to get encoded audio: %s\n", audioBuffErr.Error())
-        fmt.Printf("\n%s", err)
-        return
-    }
-
-    time.Sleep(250 * time.Millisecond)
-
-    options := dca.StdEncodeOptions
-    options.RawOutput = true
-    options.Bitrate = 96
-    options.Application = "lowdelay"
-    options.Volume = 500
-
-    encodingSession, encodingErr := dca.EncodeMem(audioBuff, options)
-    if encodingErr != nil {
-        err := fmt.Sprintf("encoding error: %s\n", encodingErr.Error())
-        fmt.Printf(err)
-        return
-    }
-
-    time.Sleep(2000 * time.Millisecond)
-
-    fmt.Printf("starting ticker\n")
-    ticker := time.NewTicker(time.Second)
-    for {
-        select {
-        case <-ticker.C: {
-            stats := encodingSession.Stats()
-            err := encodingSession.Error()
-            if err != nil {
-                fmt.Printf("error while encoding: %s\n", encodingSession.FFMPEGMessages())
-            }
-
-            fmt.Printf("transcode status: time: %s\n", stats.Duration)
-        }
-        }
-    }
 }
