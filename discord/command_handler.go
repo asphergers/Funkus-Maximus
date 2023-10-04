@@ -7,7 +7,7 @@ import (
 )
 
 
-var functions [8]Command
+var functions [9]Command
 
 func initCommands() {
     functions[0] = Ping
@@ -18,6 +18,7 @@ func initCommands() {
     functions[5] = Queue
     functions[6] = Pause
     functions[7] = Remove
+    functions[8] = Jump
 }
 
 func handleCommand(s *discordgo.Session, m *discordgo.MessageCreate) {

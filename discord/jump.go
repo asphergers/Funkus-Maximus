@@ -11,8 +11,8 @@ import (
 var Jump = Command {
     Name: "jump",
     Aliases: []string{"jump", "jmp"},
-    Description: "remove an item from the queue",
-    Help: "!remove [queue position]",
+    Description: "jump to a position in the queue",
+    Help: "!jump [queue position]",
     Function: jump,
 }
 
