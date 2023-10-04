@@ -9,8 +9,8 @@ import (
 var NowPlaying = Command {
     Name: "np",
     Aliases: []string{"nowplaying", "np"},
-    Description: "play audio from youtube videos",
-    Help: "!play [url]",
+    Description: "get information about the current track",
+    Help: "!nowplaying [url]",
     Function: np,
 }
 

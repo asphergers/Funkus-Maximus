@@ -2,6 +2,7 @@ package discord
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -10,7 +11,7 @@ var Queue = Command {
     Name: "q",
     Aliases: []string{"queue", "q"},
     Description: "show the current queue",
-    Help: "!play [url]",
+    Help: "!queue",
     Function: queue,
 }
 
@@ -29,8 +30,8 @@ func queue(s *discordgo.Session, m *discordgo.MessageCreate) {
     }
 
     var message string
-    for _, song := range guild.Queue {
-        entry := song.title + "\n" 
+    for i, song := range guild.Queue {
+        entry := strconv.Itoa(i) + ": " + song.title + "\n" 
         message += entry
     }
 

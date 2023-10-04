@@ -9,8 +9,8 @@ import (
 var Skip = Command {
     Name: "skip",
     Aliases: []string{"skip", "s"},
-    Description: "play audio from youtube videos",
-    Help: "!play [url]",
+    Description: "skip the current song",
+    Help: "!skip",
     Function: skip,
 }
 
