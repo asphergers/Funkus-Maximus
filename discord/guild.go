@@ -12,6 +12,7 @@ type Guild struct {
     Queue []*Song
     CurrentStream *dca.StreamingSession 
     CurrentSong *Song
+    Paused bool
 }
 
 func GuildNew(id string) Guild {

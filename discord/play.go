@@ -55,6 +55,7 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
     fmt.Println(guild.CurrentStream)
 
     if guild.CurrentStream != nil {
+        guild.Paused = false
         videoInfo, err := audio.GetYTVideoInfo(url);
         if err != nil {
             returnErr := fmt.Sprintf("unable to get yt video info: %s", err.Error())
