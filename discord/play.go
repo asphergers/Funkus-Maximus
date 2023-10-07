@@ -116,6 +116,8 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
         guild.CurrentSong = song
         guild.Queue = guild.Queue[1:]
 
+        if len(guild.Queue) <= 1 { guild.Queue = guild.Queue[:0] }
+
         PlaySong(s, m, song, vc, guild)
     }
 }

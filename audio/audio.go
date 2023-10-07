@@ -102,15 +102,7 @@ func EncodeMp4ToMp3(stream *os.File, audioBuff *io.PipeWriter) error {
 }
 
 func GetYTAudioBuffer(url string) (*io.PipeReader, error) {
-    //do some more error handling for the video url thing
-    //no parsing for short urls
     reader, writer := io.Pipe()
-
-    //videoId, parseErr := parser.ParseYTUrl(url)
-    //if parseErr != nil {
-    //    err := fmt.Sprintf("unable to parse url: %s\n", parseErr.Error())
-    //    return nil, errors.New(err)
-    //}
 
     videoId, _ := parser.SetId(url);
 

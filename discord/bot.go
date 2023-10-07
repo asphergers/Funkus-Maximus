@@ -57,5 +57,6 @@ func Start() {
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
     if m.Author.ID == s.State.User.ID { return }
+    if len(m.Content) < 1 { return }
     if m.Content[0] == CmdId { handleCommand(s, m) }
 }
