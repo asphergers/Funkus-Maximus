@@ -97,16 +97,11 @@ func play(s *discordgo.Session, m *discordgo.MessageCreate) {
     if vcJoinErr != nil {
         err := fmt.Sprintf("unable to join channel: %s\n", vcJoinErr.Error())
         s.ChannelMessageSend(m.ChannelID, err)
-        vc.Disconnect()
+        leaveVoiceCleanup(vc, guild)
         return
     }
 
-    defer func() {
-        vc.Speaking(false)
-        vc.Disconnect()
-        guild.CurrentStream = nil
-        guild.CurrentSong = nil
-    }()
+    defer leaveVoiceCleanup(vc, guild);
 
     for (len(guild.Queue) > 0) {
         song := guild.Queue[0]
@@ -202,6 +197,14 @@ func getCurrentUserChannel(s *discordgo.Session, m *discordgo.MessageCreate) (st
     }
 
     return "", nil
+}
+
+func leaveVoiceCleanup(vc *discordgo.VoiceConnection, guild *Guild) {
+        vc.Speaking(false)
+        vc.Disconnect()
+        guild.CurrentStream = nil
+        guild.CurrentSong = nil
+        guild.Queue = make([]*Song, 0)
 }
 
 func AddSongToQueue(guild *Guild, song *Song) error {
